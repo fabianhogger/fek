@@ -2,7 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.keys import Keys
 driver = webdriver.Chrome("C:/Users/30697/trialenviroment/chromedriver_win/chromedriver.exe")
 driver.get("https://www.et.gr/SearchFekLektiko")
 title = driver.title
@@ -25,16 +25,12 @@ rows = driver.find_elements(By.CLASS_NAME ,"dx-texteditor-input")
 for row in rows:
         if "30"==row.get_attribute('maxlength'):
             row.send_keys("ΑΣΕΠ")
+            driver.implicitly_wait(1)
+            row.send_keys(Keys.ENTER)
 driver.implicitly_wait(5)
-buttons = driver.find_elements(By.CLASS_NAME ,"dx-button-content")
+button = driver.find_element(By.CLASS_NAME ,"dx-button-content")
+print(button.value_of_css_property())
 
-for button in buttons:
-        print("aria-label   ",row.get_attribute("aria-label"))
-        print("role ",row.get_attribute("role"))
-        print("title ",row.get_attribute("title"))
-        print("tabindex ",row.get_attribute("tabindex"))
-        if(row.get_attribute("aria-label")=="search"):
-            print('found it')
 """
 dx-texteditor-input
 
