@@ -4,15 +4,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 import time
-def init_driver():
-    #load Driver
-    driver = webdriver.Chrome("C:/Users/30697/trialenviroment/chromedriver_win/chromedriver.exe")
-    #give link to detailed search
-    driver.get("https://www.et.gr/SearchFekLektiko")
-    #wait for website to load
-    driver.implicitly_wait(13)
-    return driver
-def search(driver):
+
+def search():
     #find dropdown and select by clicking it
     dropdown= driver.find_element(By.CLASS_NAME, "dx-dropdowneditor-input-wrapper")
     driver.implicitly_wait(10)
@@ -34,10 +27,10 @@ def search(driver):
                 #press enter for website to pull the results
                 row.send_keys(Keys.ENTER)
     driver.implicitly_wait(5)
-    return driver
-def select_pdf(driver):
-    time.sleep(15)
 
+def select_pdf():
+    time.sleep(15)
+    set_date()
     rows = driver.find_elements_by_tag_name("td")
     print(len(rows))
     for row in rows:
@@ -46,9 +39,25 @@ def select_pdf(driver):
             row.click()
             time.sleep(10)
             break
+def set_date():
+    rows = driver.find_elements_by_tag_name("input")
+    print("set")
+    for row in rows:
+        if(row.get_attribute("aria-describedby")=="dx-col-9" and row.get_attribute("type")=="text"):
+                #time.sleep(5)
+                #row.click()
+                #time.sleep(5)
+                #row.send_keys("04/04/2023")
+                #row.send_keys(Keys.ENTER)
+                print(row)
+                break
 
 
-
-driver=init_driver()
-driver=search(driver)
-select_pdf(driver)
+#load Driver
+driver = webdriver.Chrome("C:/Users/30697/trialenviroment/chromedriver_win/chromedriver.exe")
+#give link to detailed search
+driver.get("https://www.et.gr/SearchFekLektiko")
+#wait for website to load
+driver.implicitly_wait(13)
+search()
+select_pdf()
