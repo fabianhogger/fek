@@ -7,29 +7,11 @@ driver = webdriver.Chrome("C:/Users/30697/trialenviroment/chromedriver_win/chrom
 driver.get("https://www.et.gr/SearchFekLektiko")
 title = driver.title
 print("title :",title)
-driver.implicitly_wait(3)
-#element.send_keys("Α.Σ.Ε.Π")
-
-#search = driver.find_element(By.ID, "Search")
-#search.click()
-driver.implicitly_wait(10)
-#search.click()
-#teyxos_input = driver.find_element(By.CLASS_NAME, "dx-texteditor-input-container")
-#teyxos_input.click()
+driver.implicitly_wait(13)
 
 dropdown= driver.find_element(By.CLASS_NAME, "dx-dropdowneditor-input-wrapper")
 driver.implicitly_wait(10)
-
 dropdown.click()
-table = driver.find_element(By.CLASS_NAME, "dx-scrollable-wrapper")
-print(table)
-table = driver.find_element(By.CLASS_NAME, "dx-scrollable-container")
-print(table)
-table = driver.find_element(By.ID, "EtiTeyxiLekt")
-print(table)
-locator = (By.ID, "popup")
-#search = driver.find_element_by_xpath("//*[@id='Search']/div/div[2]/div")
-#search.click()
 
 EmbeddedDataGridSingle = driver.find_element_by_id("EmbeddedDataGridSingle")
 
@@ -39,16 +21,28 @@ for row in rows:
     if row.text=="2023 Α":
         row.click()
 
-#first_row=first_row[0]
-# Scroll the row into view
-#driver.execute_script("arguments[0].scrollIntoView(true);", first_row)
+rows = driver.find_elements(By.CLASS_NAME ,"dx-texteditor-input")
+for row in rows:
+        if "30"==row.get_attribute('maxlength'):
+            row.send_keys("ΑΣΕΠ")
+driver.implicitly_wait(5)
+buttons = driver.find_elements(By.CLASS_NAME ,"dx-button-content")
 
-#data_grid_container = driver.find_element_by_id("dataGridContainer")
-
-
+for button in buttons:
+        print("aria-label   ",row.get_attribute("aria-label"))
+        print("role ",row.get_attribute("role"))
+        print("title ",row.get_attribute("title"))
+        print("tabindex ",row.get_attribute("tabindex"))
+        if(row.get_attribute("aria-label")=="search"):
+            print('found it')
 """
+dx-texteditor-input
+
+_id("dataGridContainer")
+id="Search "
 dx-scrollable-wrapper
 dx-scrollable-container
 dx-datagrid-content
 dx-datagrid-table dx-datagrid-table-fixed
+dx-texteditor-input-container
 """
