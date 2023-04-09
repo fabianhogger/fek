@@ -34,10 +34,10 @@ class PDF_text():
         reader = PdfReader(full_path)
 
         # printing number of pages in pdf file
-        print(len(reader.pages))
+        #print(len(reader.pages))
         # getting a specific page from the pdf file
         page = reader.pages[0]
         # extracting text from page
         text = page.extract_text()
-        print(text)
+        #print(text)
         return text
