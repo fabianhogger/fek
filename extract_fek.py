@@ -30,7 +30,7 @@ def search():
 
 def select_pdf():
     time.sleep(15)
-    set_date()
+    #set_date()
     rows = driver.find_elements_by_tag_name("td")
     print(len(rows))
     for row in rows:
@@ -40,15 +40,18 @@ def select_pdf():
             time.sleep(10)
             break
 def set_date():
-    rows = driver.find_elements_by_tag_name("input")
+    rows =driver.find_elements(By.CLASS_NAME ,"dx-texteditor-input")
     print("set")
     for row in rows:
-        if(row.get_attribute("aria-describedby")=="dx-col-9" and row.get_attribute("type")=="text"):
+        print(row.get_attribute("type"))
+        print(row.get_attribute("aria-label"))
+        print("    ",row.get_attribute("aria-describedby"))
+        if(row.get_attribute("aria-describedby")=="dx-col-8" and row.get_attribute("type")=="text"):
                 #time.sleep(5)
-                #row.click()
-                #time.sleep(5)
-                #row.send_keys("04/04/2023")
-                #row.send_keys(Keys.ENTER)
+                row.click()
+                time.sleep(5)
+                row.send_keys("13/04/2023")
+                row.send_keys(Keys.ENTER)
                 print(row)
                 break
 
@@ -60,4 +63,25 @@ driver.get("https://www.et.gr/SearchFekLektiko")
 #wait for website to load
 driver.implicitly_wait(13)
 search()
+set_date()
 select_pdf()
+#driver.get("https://www.et.gr/DailyFeks")
+def select_last_pdf():
+    time.sleep(15)
+    #set_date()
+
+    #rows = driver.find_elements_by_tag_name("td")
+    rows = driver.find_elements(By.CLASS_NAME ,"dx-datagrid-group-opened")
+
+    print(len(rows))
+    for row in rows:
+        print(row.get_attribute("aria-expanded"))
+        if( row.get_attribute("aria-expanded") == None):
+            row.click()
+        if(row.get_attribute("aria-colindex")=="2"):
+            print("entered")
+            time.sleep(1)
+            row.click()
+            time.sleep(10)
+            break
+#select_last_pdf()
