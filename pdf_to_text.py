@@ -3,7 +3,7 @@ from PyPDF2 import PdfReader
 from datetime import date
 import regex as re
 import os
-def get_date():
+def get_date(): #xazos kwdikas
     # Returns the current local date in desired dd_mm_yyyy format
     today = str(date.today())
     today=today.split("-")
@@ -11,33 +11,41 @@ def get_date():
     today="_".join(today)
     today=".+"+today+".pdf"
     return today
-def find_file():
-    path = "C:/Users/30697/Downloads/"
-    #scan downloads folder for file
-    dir_list = os.listdir(path)
-    dir_list=[filename for filename in dir_list if filename[-3:]=="pdf"]
-    #match file with todays date in fileme
-    today=get_date()
-    file_to_extract=""
-    for filename in dir_list:
-        if( re.match(today,filename)):
-            file_to_extract=filename
-    full_path=path+file_to_extract
-    return full_path
+
+
 class PDF_text():
-    def __init__(self):
+    def __init__(self,path: str ):
+        self.path = path
+        self._reader = PdfReader(self.path)
+
+    def __repr__(self):
+        return f'fek, {self.path}, {get_date()}'
+    
+    def __getitem__(self,page: int):
+        return self._reader.pages[page].extract_text()
+
+    @property
+    def len(self):
+        return len(self._reader.pages)
+
+
+    def _extract_fek_date(self) -> date:
         pass
+    
+    def __gt__(self,other) -> bool: #compare FEKS by date GREATER = OLDER
+        return extract_fek_date(self) > extract_fek_date(other)
 
-    def read_text(self):
-        full_path=find_file()
-        # creating a pdf reader object
-        reader = PdfReader(full_path)
 
-        # printing number of pages in pdf file
-        #print(len(reader.pages))
-        # getting a specific page from the pdf file
-        page = reader.pages[0]
-        # extracting text from page
-        text = page.extract_text()
-        #print(text)
-        return text
+    
+class Twitter:
+    def __init__(self, credentials: dict, *args, **kwargs ):
+        self.credentials = credentials
+
+    @staticmethod
+    def construct_tweet(pdf: PDF_text, post: bool = False):
+        pass
+        # PARSE IMPORTANT INFO,using regex, GPT and a DICT OF LAW TERMS
+
+
+file = r'ZERVOsworkearly_data_analyst.pdf'
+
