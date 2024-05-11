@@ -10,12 +10,12 @@ def search():
     dropdown= driver.find_element(By.CLASS_NAME, "dx-dropdowneditor-input-wrapper")
     driver.implicitly_wait(10)
     dropdown.click()
-    EmbeddedDataGridSingle = driver.find_element_by_id("EmbeddedDataGridSingle")
+    EmbeddedDataGridSingle = driver.find_element(By.ID,"EmbeddedDataGridSingle")
     # Find all rows
     rows = driver.find_elements(By.CLASS_NAME ,"dx-row")
     for row in rows:
         # find row of dropdown
-        if row.text=="2023 Α":
+        if row.text=="2024 Α":
             row.click()
     #find all list of elements to narrow down to input field
     rows = driver.find_elements(By.CLASS_NAME ,"dx-texteditor-input")
@@ -31,9 +31,10 @@ def search():
 def select_pdf():
     time.sleep(15)
     #set_date()
-    rows = driver.find_elements_by_tag_name("td")
+    rows = driver.find_elements(By.TAG_NAME ,"td")
     print(len(rows))
     for row in rows:
+        print(row.text)
         if(row.get_attribute("aria-describedby")=="dx-col-11"):
             time.sleep(1)
             row.click()
@@ -50,14 +51,14 @@ def set_date():
                 #time.sleep(5)
                 row.click()
                 time.sleep(5)
-                row.send_keys("13/04/2023")
+                row.send_keys("26/01/2024")
                 row.send_keys(Keys.ENTER)
                 print(row)
                 break
 
 
 #load Driver
-driver = webdriver.Chrome("C:/Users/30697/trialenviroment/chromedriver_win/chromedriver.exe")
+driver = webdriver.Chrome()
 #give link to detailed search
 driver.get("https://www.et.gr/SearchFekLektiko")
 #wait for website to load
