@@ -1,7 +1,7 @@
-from pdf_to_text import PDF_text, Twitter
+from PDF_text import PDF_text, Twitter
 from orologia import YPOURGEIA_2024 as ypourgeia
-pdf_object=PDF_text()
-text=pdf_object.read_text()
+pdf_object=PDF_text(r"C:\Users\draiz\Downloads\FEK-2024-TefxosB.pdf")
+text=pdf_object.text
 
 
 def vres_ipourgeia(text):
