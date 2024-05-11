@@ -1,5 +1,5 @@
 import requests
-from pdf_to_text import PDF_text
+from PDF_text import PDF_text
 from PyPDF2 import PdfWriter
 import io
 
