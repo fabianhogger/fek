@@ -12,7 +12,11 @@ consumer_secret =  parameters["consumer_key_secret"]
 access_token =  parameters["access_token"]
 access_token_secret =  parameters["access_token_secret"]
 
-# Authenticate with OAuth2
-auth = tweepy.OAuth1UserHandler(consumer_key, consumer_secret,access_token,access_token_secret)
-api = tweepy.API(auth)
-api.update_status(status="fek salkdjadsd")
+
+
+client = tweepy.Client(consumer_key=consumer_key,
+                       consumer_secret=consumer_secret,
+                       access_token=access_token,
+                       access_token_secret=access_token_secret)
+# Replace the text with whatever you want to Tweet about
+response = client.create_tweet(text='hello world')
