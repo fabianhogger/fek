@@ -47,14 +47,37 @@ class PDF_text():
         
     @property    
     def teyxos(self) -> str:
-        page = self[1]
-        teyxos_pattern = r'Τεύχος\s[A-Z]’'
+        page = self[0]
+
+
+        pattern = r'ΤΕΥΧΟΣ.*?(\b[Α-ΩΔ\.]+\b)'
         try:
-            teyxos = re.search(teyxos_pattern,page)
-            return teyxos.group()
+            teuxos = re.search(pattern,page)
+            words = teuxos.group().split(' ')
+            return words[2]
         except:
             print('teuxos not found')
-            return None     
+            return None
+        
+
+    @property
+    def fullo(self) -> str:
+        page = self[0]
+        #print(page)
+        pattern = r'Αρ\.\s+Φύλλου\s+(\d+)\s+'
+
+        try:
+            match = re.search(pattern, page)
+            if match:
+                return match.group()
+            else:
+                print('Αρ. Φύλλου not found')
+                return None
+        except Exception as e:
+            print('Error extracting Αρ. Φύλλου:', e)
+            return None
+             
+
     
     def __gt__(self,other) -> bool: #compare FEKS by date GREATER = OLDER
         return date.strptime(self.date, "%d.%m.%Y").date() > date.strptime(other.date, "%d.%m.%Y").date()
