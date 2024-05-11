@@ -19,21 +19,44 @@ class PDF_text():
         self._reader = PdfReader(self.path)
 
     def __repr__(self):
-        return f'fek, {self.path}, {get_date()}'
+        return f'ΦΕΚ,{self.teyxos}/{self.date}'
     
     def __getitem__(self,page: int):
         return self._reader.pages[page].extract_text()
 
     @property
-    def len(self):
+    def len(self) -> int:
         return len(self._reader.pages)
+    
+    @property
+    def text(self) -> str:
+        return "".join([self[page] for page in range(self.len)])
 
-
-    def _extract_fek_date(self) -> date:
-        pass
+    @property
+    def date(self) -> str:
+        page = self[1]
+        date_pattern = r'\b\d{2}\.\d{2}\.\d{4}\b'
+        try:
+            date = re.search(date_pattern,page)
+            return date.group()
+        except:
+            print('date not found')
+            return None
+        
+    @property    
+    def teyxos(self) -> str:
+        page = self[1]
+        teyxos_pattern = r'Τεύχος\s[A-Z]’'
+        try:
+            teyxos = re.search(teyxos_pattern,page)
+            return teyxos.group()
+        except:
+            print('teuxos not found')
+            return None     
     
     def __gt__(self,other) -> bool: #compare FEKS by date GREATER = OLDER
-        return extract_fek_date(self) > extract_fek_date(other)
+        return date.strptime(self.date, "%d.%m.%Y").date() > date.strptime(other.date, "%d.%m.%Y").date()
+
 
 
     
