@@ -3,6 +3,7 @@ from PyPDF2 import PdfReader
 from datetime import date
 import regex as re
 import os
+
 def get_date(): #xazos kwdikas
     # Returns the current local date in desired dd_mm_yyyy format
     today = str(date.today())
@@ -14,9 +15,10 @@ def get_date(): #xazos kwdikas
 
 
 class PDF_text():
-    def __init__(self,path: str ):
-        self.path = path
-        self._reader = PdfReader(self.path)
+    def __init__(self,path = None):
+        if path:
+            self.path = path
+            self._reader = PdfReader(self.path)
 
     def __repr__(self):
         return f'ΦΕΚ,{self.teyxos}/{self.date}'
@@ -68,7 +70,4 @@ class Twitter:
     def construct_tweet(pdf: PDF_text, post: bool = False):
         pass
         # PARSE IMPORTANT INFO,using regex, GPT and a DICT OF LAW TERMS
-
-
-file = r'ZERVOsworkearly_data_analyst.pdf'
 
