@@ -8,7 +8,7 @@ class Summerize():
       model="gpt-3.5-turbo-0125",
       response_format={ "type": "json_object" },
       messages=[
-        {"role": "system", "content": "I need you to summerize IN GREEK the following text limit it to 280 characters and don't present it as a summary but in first person, return output JSON"},
+        {"role": "system", "content": "I need you to summerize IN GREEK the following text limit it to 280 characters and don't present it as a summary but in first person,     return output JSON"},
         {"role": "user", "content": input }
     ]
     )
