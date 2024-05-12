@@ -13,10 +13,6 @@ def get_date(): #xazos kwdikas
     today=".+"+today+".pdf"
     return today
 
-def setter(func):
-    def wrapper(self, value):
-        func(self, value)
-    return wrapper
 class PDF_text():
     def __init__(self,path = None):
         if path:
