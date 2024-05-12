@@ -26,9 +26,9 @@ client = tweepy.Client(consumer_key=consumer_key,
 fek_object=Fek_getter()
 pdf_obj=fek_object.get_fek()
 input=pdf_obj[0]
+
 pdf_obj.teyxos='2089'
 pdf_obj.fullo='B'
-
 sum=Summerize()
 jsonobj=sum.summerize(input)
 print(jsonobj)
