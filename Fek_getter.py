@@ -77,5 +77,4 @@ if __name__ == "__main__":
                 with open('PDFS/all_pdfs.txt','w',encoding='utf-8') as file:
                     file.write(f'ΦΕΚ: Ημ/νια: {pdf.date}, Τεύχος: {pdf.teyxos}, Φύλλο: {fullo_num}, Σελίδες: {pdf.len}')
                     print(f'ΦΕΚ: Ημ/νια: {pdf.date}, Τεύχος: {pdf.teyxos}, Φύλλο: {fullo_num}, Σελίδες: {pdf.len}')
-
-#test()
+    #test()
