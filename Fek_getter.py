@@ -58,24 +58,23 @@ class Fek_getter:
             return data[teuxos.name][1]
 
     def get_fek_by_date():
-        pass   
+        pass
+if __name__ == "__main__":
+    #api = r'https://www.et.gr/api/DownloadFeksApi/?fek_pdf=20240202730'
+    a = Fek_getter()
+    b= a.fetch_cache()
+    pdf = a.get_latest_fek()
+    if pdf:
+        print(b)
+        print(f'ΦΕΚ: Ημ/νια: {pdf.date}, Τεύχος: {pdf.teyxos}, Φύλλο: {1}, Σελίδες: {pdf.len}')
+        print(pdf[0])
 
-#api = r'https://www.et.gr/api/DownloadFeksApi/?fek_pdf=20240202730'
-a = Fek_getter()
-b= a.fetch_cache()
-pdf = a.get_latest_fek()
-if pdf:
-    print(b)
-    print(f'ΦΕΚ: Ημ/νια: {pdf.date}, Τεύχος: {pdf.teyxos}, Φύλλο: {1}, Σελίδες: {pdf.len}')
-    print(pdf[0])
-
-def test():
-    for i in range(60):
-        fullo_num=i
-        pdf = Fek_getter().get_fek(year=2024,teuxos=10,fullo=fullo_num)
-        if pdf:
-            with open('PDFS/all_pdfs.txt','w',encoding='utf-8') as file:
-                file.write(f'ΦΕΚ: Ημ/νια: {pdf.date}, Τεύχος: {pdf.teyxos}, Φύλλο: {fullo_num}, Σελίδες: {pdf.len}')
-                print(f'ΦΕΚ: Ημ/νια: {pdf.date}, Τεύχος: {pdf.teyxos}, Φύλλο: {fullo_num}, Σελίδες: {pdf.len}')
-
-#test()
+    def test():
+        for i in range(60):
+            fullo_num=i
+            pdf = Fek_getter().get_fek(year=2024,teuxos=10,fullo=fullo_num)
+            if pdf:
+                with open('PDFS/all_pdfs.txt','w',encoding='utf-8') as file:
+                    file.write(f'ΦΕΚ: Ημ/νια: {pdf.date}, Τεύχος: {pdf.teyxos}, Φύλλο: {fullo_num}, Σελίδες: {pdf.len}')
+                    print(f'ΦΕΚ: Ημ/νια: {pdf.date}, Τεύχος: {pdf.teyxos}, Φύλλο: {fullo_num}, Σελίδες: {pdf.len}')
+    #test()
