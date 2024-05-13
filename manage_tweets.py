@@ -23,6 +23,7 @@ client = tweepy.Client(consumer_key=consumer_key,
                        access_token_secret=access_token_secret)
 # Replace the text with whatever you want to Tweet about
 
+
 fek_object=Fek_getter()
 pdf_obj=fek_object.get_fek()
 input=pdf_obj[0]
