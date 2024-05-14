@@ -24,11 +24,9 @@ client = tweepy.Client(consumer_key=post.consumer_key,
 # Replace the text with whatever you want to Tweet about
 
 fek_object=Fek_getter()
-pdf_obj=fek_object.get_latest_fek()
+pdf_obj=fek_object.get_fek(year= 2024, teuxos= 10, fullo= 9)
 input=pdf_obj[0]
 
-pdf_obj.teyxos='2089'
-pdf_obj.fullo='B'
 sum=Summerize()
 jsonobj=sum.summerize(input)
 print(jsonobj)
