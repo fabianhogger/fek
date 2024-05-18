@@ -23,17 +23,20 @@ client = tweepy.Client(consumer_key=post.consumer_key,
                        access_token_secret=post.access_token_secret)
 # Replace the text with whatever you want to Tweet about
 
-fek_object=Fek_getter()
-pdf_obj=fek_object.get_fek(year= 2024, teuxos= 10, fullo= 9)
-input=pdf_obj[0]
 
-sum=Summerize()
-jsonobj=sum.summerize(input)
-print(jsonobj)
-print(type(jsonobj))
-diction=json.loads(jsonobj)
-print(diction['output'])
-if(diction['output']):
-    response = client.create_tweet(text=diction['output'])
-else:
-    print('not tweeted')
+if __name__=='__main__':
+    import sys
+    fek_object=Fek_getter()
+    pdf_obj=fek_object.get_fek(year= (int(sys.argv[1]) or 2024), teuxos= (int(sys.argv[2]) or 2), fullo= (int(sys.argv[3]) or 2820 ))
+    print(type(pdf_obj  ))
+    input=pdf_obj[0]   
+    sum=Summerize()
+    jsonobj=sum.summerize(input)
+    print(jsonobj)
+    print(type(jsonobj))
+    diction=json.loads(jsonobj)
+    print(diction['output'])
+    if(diction['output']):
+        response = client.create_tweet(text=diction['output'])
+    else:
+        print('not tweeted')
