@@ -1,17 +1,8 @@
+"""PDF_TEXT"""
+from datetime import date
 
 from PyPDF2 import PdfReader
-from datetime import date
 import regex as re
-import os
-
-def get_date(): #xazos kwdikas
-    # Returns the current local date in desired dd_mm_yyyy format
-    today = str(date.today())
-    today=today.split("-")
-    today.reverse()
-    today="_".join(today)
-    today=".+"+today+".pdf"
-    return today
 
 class PDF_text():
     def __init__(self,path = None):
@@ -44,7 +35,7 @@ class PDF_text():
             print('date not found')
             return None
         
-    @property    
+    @property   
     def teyxos(self) -> str:
         page = self[0]
 
@@ -60,7 +51,7 @@ class PDF_text():
     
     @teyxos.setter
     def teyxos(self,teuxos)-> None:
-        if teuxos!=None:
+        if teuxos:
             self._teyxos=teuxos
         
 
@@ -74,31 +65,18 @@ class PDF_text():
             match = re.search(pattern, page)
             if match:
                 return match.group()
-            else:
-                print('Αρ. Φύλλου not found')
-                return None
+            print('Αρ. Φύλλου not found')
+            return None
         except Exception as e:
             print('Error extracting Αρ. Φύλλου:', e)
             return None
     @fullo.setter
     def fullo(self,leaf)-> None:
-        if leaf!=None:
+        if leaf:
             self._fullo=leaf
                     
 
     
     def __gt__(self,other) -> bool: #compare FEKS by date GREATER = OLDER
         return date.strptime(self.date, "%d.%m.%Y").date() > date.strptime(other.date, "%d.%m.%Y").date()
-
-
-
-    
-class Twitter:
-    def __init__(self, credentials: dict, *args, **kwargs ):
-        self.credentials = credentials
-
-    @staticmethod
-    def construct_tweet(pdf: PDF_text, post: bool = False):
-        pass
-        # PARSE IMPORTANT INFO,using regex, GPT and a DICT OF LAW TERMS
 

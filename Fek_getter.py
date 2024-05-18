@@ -63,7 +63,7 @@ class Fek_getter:
 
     def get_fek_by_date():
         pass
-if __name__ == "__main__":
+"""if __name__ == "__main__":
     #api = r'https://www.et.gr/api/DownloadFeksApi/?fek_pdf=20240202730'
     a = Fek_getter()
     b= a.fetch_cache()
@@ -78,14 +78,15 @@ if __name__ == "__main__":
         for i in range(60):
             fullo_num=i
             pdf = Fek_getter().get_fek(year=2024,teuxos=10,fullo=fullo_num)
+            print(pdf)
             if pdf:
-                with open('PDFS/all_pdfs.txt','w',encoding='utf-8') as file:
+                with open('PDFS/all_pdfs.txt','a',encoding='utf-8') as file:
                     file.write(f'ΦΕΚ: Ημ/νια: {pdf.date}, Τεύχος: {pdf.teyxos}, Φύλλο: {fullo_num}, Σελίδες: {pdf.len}')
                     print(f'ΦΕΚ: Ημ/νια: {pdf.date}, Τεύχος: {pdf.teyxos}, Φύλλο: {fullo_num}, Σελίδες: {pdf.len}')
 
-#api = r'https://www.et.gr/api/DownloadFeksApi/?fek_pdf=20240202730'
+#api = r'https://www.et.gr/api/DownloadFeksApi/?fek_pdf=20240202730'"""
 
-def main(update_cache = False):
+def main(update_cache = True):
     getter = Fek_getter()
     for teuxos in Teuxos:
         fek_path = getter.get_latest_fek(give_teuxos = teuxos, update_cache=update_cache)
