@@ -26,17 +26,25 @@ client = tweepy.Client(consumer_key=post.consumer_key,
 
 if __name__=='__main__':
     import sys
+    import time
     fek_object=Fek_getter()
     pdf_obj=fek_object.get_fek(year= (int(sys.argv[1]) or 2024), teuxos= (int(sys.argv[2]) or 2), fullo= (int(sys.argv[3]) or 2820 ))
     print(type(pdf_obj  ))
-    input=pdf_obj[0]   
+    inpt=pdf_obj[0]   
     sum=Summerize()
-    jsonobj=sum.summerize(input)
+    jsonobj=sum.summerize(inpt)
     print(jsonobj)
     print(type(jsonobj))
     diction=json.loads(jsonobj)
     print(diction['output'])
+    with open("edit_floor.txt", "w",encoding="utf-8") as f:
+        f.write(str(diction['output']))
+        print("write anything to stop edit")
+        f.close()
+    wait=input()
+    f=open("edit_floor.txt", "r",encoding="utf-8")
+    tweet=f.read()   
     if(diction['output']):
-        response = client.create_tweet(text=diction['output'])
+        response = client.create_tweet(text=tweet)
     else:
         print('not tweeted')
