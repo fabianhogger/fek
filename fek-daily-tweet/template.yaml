@@ -1,0 +1,193 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Reads the day's Εφημερίδα της Κυβερνήσεως publications, summarises the most
+  newsworthy one with OpenAI, and posts it to X. Runs once a day on weekdays.
+
+Parameters:
+  StackSuffix:
+    Type: String
+    Default: ""
+    Description: Optional suffix so a dev stack can run beside prod.
+  ScheduleExpression:
+    Type: String
+    Default: cron(0 21 ? * MON-FRI *)
+    Description: >
+      21:00 Athens on weekdays. The daily listing fills through the day — at 13:00
+      local one weekday it held 4 rows and by evening 90 — so an evening run sees
+      the complete day. Weekends publish nothing at all.
+  ScheduleTimezone:
+    Type: String
+    Default: Europe/Athens
+  ScheduleEnabled:
+    Type: String
+    Default: "ENABLED"
+    AllowedValues: [ENABLED, DISABLED]
+  DryRun:
+    Type: String
+    Default: "true"
+    AllowedValues: ["true", "false"]
+    Description: Deploy true first; flip to false once the composed output looks right.
+  OpenAiModel:
+    Type: String
+    Default: gpt-4o-mini
+  ThreadMode:
+    Type: String
+    Default: auto
+    AllowedValues: [single, auto, always]
+  MinNewsworthiness:
+    Type: String
+    Default: "4"
+    Description: Documents scoring below this are skipped in favour of the next candidate.
+  AlarmEmail:
+    Type: String
+    Default: ""
+    Description: Optional address to notify when a run fails.
+
+Conditions:
+  HasAlarmEmail: !Not [!Equals [!Ref AlarmEmail, ""]]
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Architectures: [arm64]
+    Timeout: 300
+    MemorySize: 1024
+
+Resources:
+  FekTweetFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "fek-daily-tweet${StackSuffix}"
+      CodeUri: src/
+      Handler: app.lambda_handler
+      Description: Summarise the day's most newsworthy ΦΕΚ and post it to X.
+      # A 112-page law is a 9.4 MB PDF and a 888-page Τεύχος Β issue is far larger;
+      # both are streamed to /tmp, which is the only writable path in Lambda.
+      EphemeralStorage:
+        Size: 1024
+      Environment:
+        Variables:
+          DRY_RUN: !Ref DryRun
+          OPENAI_MODEL: !Ref OpenAiModel
+          THREAD_MODE: !Ref ThreadMode
+          MIN_NEWSWORTHINESS: !Ref MinNewsworthiness
+          TABLE_NAME: !Ref PostedTable
+          SSM_PREFIX: !Sub "/fek-daily-tweet${StackSuffix}"
+          TZ_NAME: !Ref ScheduleTimezone
+          INCLUDE_LINK: "true"
+          LOG_LEVEL: INFO
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref PostedTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - ssm:GetParametersByPath
+                - ssm:GetParameter
+                - ssm:GetParameters
+              Resource: !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/fek-daily-tweet${StackSuffix}/*"
+            - Effect: Allow
+              Action: kms:Decrypt
+              Resource: !Sub "arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:alias/aws/ssm"
+
+  # Dedupe and audit trail. Checked before any download or model call, so a retry
+  # or a manual replay costs nothing. facts_json is kept so the editorial policy
+  # can be tuned against what the pipeline actually decided.
+  PostedTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "fek-posted-documents${StackSuffix}"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: fek_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: fek_id
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: expires_at
+        Enabled: true
+
+  SchedulerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: scheduler.amazonaws.com
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+      Policies:
+        - PolicyName: InvokeFekTweetFunction
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: lambda:InvokeFunction
+                Resource: !GetAtt FekTweetFunction.Arn
+
+  DailySchedule:
+    Type: AWS::Scheduler::Schedule
+    Properties:
+      Name: !Sub "fek-daily-tweet${StackSuffix}"
+      Description: Daily ΦΕΚ summary post.
+      State: !Ref ScheduleEnabled
+      ScheduleExpression: !Ref ScheduleExpression
+      # EventBridge Scheduler applies DST itself, so this survives the March and
+      # October changeovers without drifting against UTC.
+      ScheduleExpressionTimezone: !Ref ScheduleTimezone
+      FlexibleTimeWindow:
+        Mode: "OFF"
+      Target:
+        Arn: !GetAtt FekTweetFunction.Arn
+        RoleArn: !GetAtt SchedulerRole.Arn
+        Input: "{}"
+        RetryPolicy:
+          MaximumRetryAttempts: 2
+          MaximumEventAgeInSeconds: 3600
+
+  ErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "fek-daily-tweet${StackSuffix}-errors"
+      AlarmDescription: The daily ΦΕΚ post failed.
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref FekTweetFunction
+      Statistic: Sum
+      Period: 86400
+      EvaluationPeriods: 1
+      Threshold: 0
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: !If [HasAlarmEmail, [!Ref AlarmTopic], !Ref "AWS::NoValue"]
+
+  AlarmTopic:
+    Type: AWS::SNS::Topic
+    Condition: HasAlarmEmail
+    Properties:
+      TopicName: !Sub "fek-daily-tweet${StackSuffix}-alarms"
+      Subscription:
+        - Protocol: email
+          Endpoint: !Ref AlarmEmail
+
+Outputs:
+  FunctionName:
+    Description: Invoke this for a manual run.
+    Value: !Ref FekTweetFunction
+  FunctionArn:
+    Value: !GetAtt FekTweetFunction.Arn
+  TableName:
+    Value: !Ref PostedTable
+  ScheduleName:
+    Value: !Ref DailySchedule
+  SsmPrefix:
+    Description: Put the five SecureString credentials under this path.
+    Value: !Sub "/fek-daily-tweet${StackSuffix}"
