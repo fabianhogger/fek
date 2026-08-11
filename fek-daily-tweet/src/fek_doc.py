@@ -310,6 +310,28 @@ def _parse_toc_b(text: str) -> list[TocEntry]:
     return entries
 
 
+def is_garbled(text: str) -> bool:
+    """True when text came out of an undecodable font encoding.
+
+    Some issues embed subset fonts with no ToUnicode map — the 76-page strategy
+    annex of Π.Υ.Σ. 22/2026, for instance, extracts as ``D\\}ZR^l}N]\\aRXRg}``
+    under both pypdf and poppler. It is not recoverable, so it must be detected
+    and dropped rather than summarised.
+
+    Two signals together, because either alone has false positives: almost no
+    Greek letters, and a high rate of the delimiter characters that these
+    encodings map spaces and punctuation onto.
+    """
+    if len(text) < 200:
+        return False
+    letters = [c for c in text if c.isalpha()]
+    if not letters:
+        return False
+    greek = sum(1 for c in letters if "Ͱ" <= c <= "Ͽ" or "ἀ" <= c <= "῿")
+    delimiters = sum(text.count(c) for c in "}~\\")
+    return greek / len(letters) < 0.5 and delimiters / len(text) > 0.02
+
+
 def _first_line(text: str, limit: int = 200) -> str:
     """First non-empty line, used when a heading carries no inline title."""
     for line in text.splitlines():
@@ -402,7 +424,27 @@ def parse(
 ) -> FekDoc:
     """Parse a downloaded gazette PDF into an addressable document."""
     text, page_count = extract_text(pdf_path)
+    return parse_text(
+        text,
+        page_count=page_count,
+        fek_id=fek_id,
+        label=label,
+        issue_group=issue_group,
+        pdf_url=pdf_url,
+    )
 
+
+def parse_text(
+    text: str,
+    *,
+    page_count: int,
+    fek_id: str,
+    label: str,
+    issue_group: int,
+    pdf_url: str,
+) -> FekDoc:
+    """Parse already-extracted gazette text. Separated from PDF reading so the
+    structural logic can be tested without shipping large binaries."""
     law_type, law_number, law_title = _parse_law_heading(text[:8000])
 
     if issue_group == 2:
@@ -430,6 +472,16 @@ def parse(
     # Fall back to the table of contents when article headings could not be split out.
     if not sections and toc:
         sections = [Section(number=e.number, title=e.title, text="") for e in toc]
+
+    # Drop anything that came out of an undecodable font encoding — feeding it to
+    # the model would produce a confident summary of nothing.
+    readable = [s for s in sections if not is_garbled(s.text)]
+    if len(readable) != len(sections):
+        dropped = len(sections) - len(readable)
+        log.warning("%s: dropped %d unreadable section(s) of %d", label, dropped, len(sections))
+        kept = {s.number for s in readable}
+        sections = readable
+        toc = [e for e in toc if e.number in kept] if toc else toc
 
     # Short acts carry no table of contents; derive one from the sections so that
     # triage sees the same shape regardless of document size.

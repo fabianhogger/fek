@@ -4,10 +4,10 @@ These are the checks that stand between the pipeline and a bad post, so they run
 without touching the network — the LLM shortening path is monkeypatched out.
 """
 
-import os
+
 
 import pytest
-from conftest import FIXTURES
+from conftest import fixture
 
 import fek_doc
 from fek_doc import FekDoc
@@ -157,7 +157,7 @@ class TestPrivacy:
     def test_real_issue_b_names_are_detected(self):
         """End-to-end against the actual gazette issue that names fined individuals."""
         doc = fek_doc.parse(
-            os.path.join(FIXTURES, "20260205013.pdf"),
+            fixture("20260205013"),
             fek_id="20260205013",
             label="Β 5013/2026",
             issue_group=2,

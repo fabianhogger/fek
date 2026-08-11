@@ -16,7 +16,9 @@ import os
 import sys
 import tempfile
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"))
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(_ROOT, "src"))
+sys.path.insert(0, os.path.join(_ROOT, "scripts"))
 
 
 def main() -> int:
@@ -31,10 +33,22 @@ def main() -> int:
         default="compose",
     )
     parser.add_argument("--label", help="force a specific issue, e.g. 'Α 121/2026'")
+    parser.add_argument(
+        "--fake-llm",
+        action="store_true",
+        help="stub out OpenAI to exercise the wiring without an API key",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
     os.environ.setdefault("DRY_RUN", "false" if args.post else "true")
+
+    if args.fake_llm:
+        import fake_llm
+        import llm as llm_module
+
+        fake_llm.install(llm_module, verbose=args.explain)
+        print("!!! --fake-llm: stubbed model, output is meaningless by design")
 
     import et_client
     import fek_doc

@@ -5,17 +5,15 @@ a 112-page law with a table of contents, a 2-page decree without one, and a
 Τεύχος Β issue whose acts are delimited by bare "(n)" markers.
 """
 
-import os
-
 import pytest
-from conftest import FIXTURES
+from conftest import fixture
 
 import fek_doc
 
 
 def _parse(fek_id, label, issue_group):
     return fek_doc.parse(
-        os.path.join(FIXTURES, f"{fek_id}.pdf"),
+        fixture(fek_id),
         fek_id=fek_id,
         label=label,
         issue_group=issue_group,
@@ -39,6 +37,12 @@ def decree():
 def issue_b():
     """ΦΕΚ Β 5013/2026 — three acts, two of them about named individuals."""
     return _parse("20260205013", "Β 5013/2026", 2)
+
+
+@pytest.fixture(scope="module")
+def cabinet_act():
+    """Π.Υ.Σ. 22/2026 — no articles, and a 76-page annex in a broken encoding."""
+    return _parse("20260100126", "Α 126/2026", 1)
 
 
 class TestLawName:
@@ -120,6 +124,48 @@ class TestSections:
     def test_section_text_respects_budget(self, law):
         text = law.section_text([1, 2, 3], max_chars=500)
         assert len(text) <= 520  # allows for the joining separator
+
+
+class TestCabinetAct:
+    """Acts of the Cabinet head differently and often carry no articles at all."""
+
+    def test_heading_recognised(self, cabinet_act):
+        assert cabinet_act.law_name == "Π.Υ.Σ. 22/2026"
+        assert cabinet_act.law_title == "Έγκριση της Εθνικής Στρατηγικής για τα Ύδατα."
+
+    def test_unstructured_body_is_not_one_giant_blob(self, cabinet_act):
+        # Without chunking this parsed as a single 190k-character section, which
+        # gives triage nothing to choose between.
+        assert len(cabinet_act.sections) > 1
+
+    def test_undecodable_annex_is_dropped(self, cabinet_act):
+        # The strategy annex uses a subset font with no ToUnicode map; poppler
+        # fails on it identically, so it cannot be recovered — only discarded.
+        for section in cabinet_act.sections:
+            assert not fek_doc.is_garbled(section.text)
+
+    def test_readable_operative_text_survives(self, cabinet_act):
+        combined = " ".join(s.text for s in cabinet_act.sections)
+        assert "Εφημερίδα" in combined
+
+
+class TestGarbledDetection:
+    def test_flags_broken_encoding(self):
+        sample = (
+            "D\\}ZR^l}N]\\aRXRg}a\\Z}]\\XbaVYlaR^\\}cb`VWl}]l^\\}WNV}a\\}URYoXV\\}"
+            "WnUR}Y\\^cp_}Sfp_}W\\VZfZVWp_}\\^PnZf`T_}WNV}\\VW\\Z\\YVWp_}Q^N`aT^VlaTaN_~}"
+        ) * 3
+        assert fek_doc.is_garbled(sample)
+
+    def test_accepts_normal_greek(self, law):
+        assert not fek_doc.is_garbled(law.sections[5].text)
+
+    def test_accepts_greek_with_english_terms(self, issue_b):
+        # This act is full of "Prosigna Breast Cancer Prognostic Gene Signature".
+        assert not fek_doc.is_garbled(issue_b.sections[0].text)
+
+    def test_ignores_short_strings(self):
+        assert not fek_doc.is_garbled("}~\\}~\\")
 
 
 class TestTextCleaning:

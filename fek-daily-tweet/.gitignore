@@ -5,7 +5,9 @@ __pycache__/
 
 # SAM build artefacts
 .aws-sam/
-samconfig.toml
+
+# Public gazette PDFs — run scripts/fetch_fixtures.py instead of committing 10MB.
+tests/fixtures/*.pdf
 
 # Never commit credentials — they belong in SSM SecureStrings.
 .env
