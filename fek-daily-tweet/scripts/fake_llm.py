@@ -13,7 +13,16 @@ import re
 def install(llm_module, *, verbose: bool = False) -> None:
     """Replace llm.complete_json with a deterministic stand-in."""
 
-    def fake(system: str, user: str, *, label: str, max_tokens: int = 2000) -> dict:
+    def fake(
+        system: str,
+        user: str,
+        *,
+        label: str,
+        schema: dict | None = None,
+        max_tokens: int = 2000,
+        thinking: bool = True,
+        effort: str | None = None,
+    ) -> dict:
         if verbose:
             print(f"\n--- FAKE LLM [{label}] system prompt is {len(system)} chars, "
                   f"user payload {len(user)} chars")

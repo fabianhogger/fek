@@ -4,9 +4,10 @@ version = 0.1
 stack_name = "fek-daily-tweet"
 
 [default.build.parameters]
-# Docker gives you the right arm64 wheels regardless of your build machine.
-# Drop this if Docker is not running; pip usually resolves them correctly anyway.
-use_container = true
+# pip resolves the aarch64 wheels correctly on this machine, so a plain build works
+# and does not need Docker running. Switch to true if a dependency ever ships a
+# platform-specific wheel that pip picks wrong for arm64.
+use_container = false
 
 [default.deploy.parameters]
 capabilities = "CAPABILITY_IAM"

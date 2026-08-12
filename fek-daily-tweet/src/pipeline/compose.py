@@ -16,11 +16,25 @@ import re
 import unicodedata
 
 import llm
-from config import editorial_policy, prompt, settings
+from config import editorial_policy, render, settings
 from fek_doc import FekDoc
 from pipeline.extract import Facts, Provision
 
 log = logging.getLogger(__name__)
+
+COMPOSE_SCHEMA = {
+    "type": "object",
+    "properties": {"tweets": {"type": "array", "items": {"type": "string"}}},
+    "required": ["tweets"],
+    "additionalProperties": False,
+}
+
+SHORTEN_SCHEMA = {
+    "type": "object",
+    "properties": {"text": {"type": "string"}},
+    "required": ["text"],
+    "additionalProperties": False,
+}
 
 TWEET_LIMIT = 280
 LINK_COST = 24  # 23 for the t.co link + 1 separating space
@@ -101,7 +115,8 @@ def _compose_template(facts: Facts, count: int) -> list[str]:
 
 
 def _compose_llm(facts: Facts, count: int, budget: int) -> list[str]:
-    system = prompt("compose").format(
+    system = render(
+        "compose",
         editorial_policy=editorial_policy(),
         tweet_count=count,
         budget=budget,
@@ -111,7 +126,8 @@ def _compose_llm(facts: Facts, count: int, budget: int) -> list[str]:
         system,
         json.dumps(facts.as_dict(), ensure_ascii=False),
         label=f"compose {facts.law_name}",
-        max_tokens=1200,
+        schema=COMPOSE_SCHEMA,
+        max_tokens=settings.compose_max_tokens,
     )
     tweets = [str(t).strip() for t in (data.get("tweets") or []) if str(t).strip()]
     if not tweets:
@@ -127,14 +143,18 @@ def _shorten(text: str, budget: int, *, law_name: str) -> str:
 
     log.warning("tweet is %d chars, over the %d budget — re-asking", len(text), budget)
     try:
+        # Rewriting a sentence under a length cap isn't a reasoning task — thinking
+        # off, low effort, keeps this a cheap, fast call.
         data = llm.complete_json(
             "Συντομεύεις κείμενα για δημοσίευση στο X, στα ελληνικά. "
-            "Διατηρείς κάθε αριθμό, ποσό και ημερομηνία. "
-            'Απαντάς μόνο με JSON: {"text": "<κείμενο>"}',
+            "Διατηρείς κάθε αριθμό, ποσό και ημερομηνία.",
             f"Το κείμενο έχει {len(text)} χαρακτήρες. Ξαναγράψ' το σε λιγότερους "
             f"από {budget} χαρακτήρες, χωρίς να χάσεις την ουσία.\n\n{text}",
             label=f"shorten {law_name}",
-            max_tokens=400,
+            schema=SHORTEN_SCHEMA,
+            max_tokens=settings.shorten_max_tokens,
+            thinking=False,
+            effort="low",
         )
         shortened = str(data.get("text") or "").strip()
         if shortened and len(shortened) <= budget:

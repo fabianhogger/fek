@@ -10,10 +10,44 @@ import logging
 from dataclasses import asdict, dataclass, field
 
 import llm
-from config import editorial_policy, prompt, settings
+from config import editorial_policy, render, settings
 from fek_doc import FekDoc
 
 log = logging.getLogger(__name__)
+
+# `amount` and `effective_date` are nullable, so they are typed as a string/null
+# union rather than left optional — the schema requires every declared key to be
+# present, and a model that omits them would fail validation instead of the run.
+SCHEMA = {
+    "type": "object",
+    "properties": {
+        "headline": {"type": "string"},
+        "contains_personal_names": {"type": "boolean"},
+        "provisions": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "what_changes": {"type": "string"},
+                    "who_is_affected": {"type": "string"},
+                    "amount": {"type": ["string", "null"]},
+                    "effective_date": {"type": ["string", "null"]},
+                    "importance": {"type": "integer"},
+                },
+                "required": [
+                    "what_changes",
+                    "who_is_affected",
+                    "amount",
+                    "effective_date",
+                    "importance",
+                ],
+                "additionalProperties": False,
+            },
+        },
+    },
+    "required": ["headline", "contains_personal_names", "provisions"],
+    "additionalProperties": False,
+}
 
 
 @dataclass
@@ -56,7 +90,7 @@ def _clean(value) -> str | None:
 def extract(doc: FekDoc, article_numbers: list[int]) -> Facts:
     body = doc.section_text(article_numbers, settings.max_extract_chars)
 
-    system = prompt("extract").format(editorial_policy=editorial_policy())
+    system = render("extract", editorial_policy=editorial_policy())
     user = (
         f"Πράξη: {doc.law_name}\n"
         f"Τίτλος: {doc.law_title}\n\n"
@@ -64,7 +98,11 @@ def extract(doc: FekDoc, article_numbers: list[int]) -> Facts:
     )
 
     data = llm.complete_json(
-        system, user, label=f"extract {doc.label}", max_tokens=3000
+        system,
+        user,
+        label=f"extract {doc.label}",
+        schema=SCHEMA,
+        max_tokens=settings.extract_max_tokens,
     )
 
     provisions = []

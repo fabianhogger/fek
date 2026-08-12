@@ -60,7 +60,11 @@ def run(date_iso: str | None = None, dry_run: bool | None = None) -> dict[str, A
 
             try:
                 result = _process(publication, workdir, date_iso, dry_run)
-            except (et_client.EtError, ComposeRejected) as exc:
+            except (et_client.EtError, ComposeRejected, llm.RefusedError) as exc:
+                # RefusedError covers a classifier decline — Τεύχος Β routinely
+                # carries customs/smuggling penalty decisions, which is exactly
+                # the content most likely to trip one. Move on to the next
+                # candidate rather than failing the whole run.
                 log.warning("skipping %s: %s", publication.label, exc)
                 skipped.append(f"{publication.label} ({exc})")
                 continue

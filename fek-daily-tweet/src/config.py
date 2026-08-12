@@ -43,15 +43,26 @@ class Settings:
     max_toc_chars: int = _int("MAX_TOC_CHARS", 24_000)
     max_extract_chars: int = _int("MAX_EXTRACT_CHARS", 40_000)
 
+    # Output ceilings. These bound thinking *and* response text together, so they
+    # are far above the size of the JSON alone — a tight budget truncates the
+    # answer after the model has spent it thinking.
+    triage_max_tokens: int = _int("TRIAGE_MAX_TOKENS", 8_000)
+    extract_max_tokens: int = _int("EXTRACT_MAX_TOKENS", 16_000)
+    compose_max_tokens: int = _int("COMPOSE_MAX_TOKENS", 4_000)
+    shorten_max_tokens: int = _int("SHORTEN_MAX_TOKENS", 1_000)
+
     # Composition
     thread_mode: str = os.environ.get("THREAD_MODE", "auto")  # single|auto|always
     thread_max_tweets: int = _int("THREAD_MAX_TWEETS", 4)
     thread_min_importance: int = _int("THREAD_MIN_IMPORTANCE", 6)
     compose_mode: str = os.environ.get("COMPOSE_MODE", "template")  # template|llm
 
-    # OpenAI
-    openai_model: str = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
-    openai_timeout: int = _int("OPENAI_TIMEOUT", 90)
+    # Anthropic
+    anthropic_model: str = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-5")
+    anthropic_timeout: int = _int("ANTHROPIC_TIMEOUT", 120)
+    # Sonnet 5 at medium is comparable to Sonnet 4.6 at high. Both stages are
+    # bounded judgement calls, not open-ended reasoning.
+    effort: str = os.environ.get("EFFORT", "medium")
 
     # AWS
     table_name: str = os.environ.get("TABLE_NAME", "fek-posted-documents")
@@ -86,7 +97,7 @@ def secrets() -> dict[str, str]:
         log.warning("SSM unavailable (%s), falling back to environment variables", exc)
 
     for key, env in (
-        ("openai_api_key", "OPENAI_API_KEY"),
+        ("anthropic_api_key", "ANTHROPIC_API_KEY"),
         ("consumer_key", "TWITTER_CONSUMER_KEY"),
         ("consumer_secret", "TWITTER_CONSUMER_SECRET"),
         ("access_token", "TWITTER_ACCESS_TOKEN"),
@@ -103,6 +114,21 @@ def prompt(name: str) -> str:
     """Read a prompt template from src/prompts/, cached across invocations."""
     with open(os.path.join(PROMPT_DIR, f"{name}.md"), encoding="utf-8") as fh:
         return fh.read()
+
+
+def render(name: str, **values: object) -> str:
+    """Fill a prompt's {{placeholders}}.
+
+    Deliberately not str.format(): the prompts are meant to be rewritten by hand,
+    and format() would raise KeyError on any stray brace — a JSON example, a set
+    in prose. Here only known keys are substituted and anything else, including
+    a mistyped {{placeholder}}, survives as literal text. A prompt is a document,
+    not a format string.
+    """
+    text = prompt(name)
+    for key, value in values.items():
+        text = text.replace("{{" + key + "}}", str(value))
+    return text
 
 
 def editorial_policy() -> str:

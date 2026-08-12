@@ -1,7 +1,7 @@
 # fek-daily-tweet
 
 Reads the day's Εφημερίδα της Κυβερνήσεως publications, picks the most newsworthy
-one, summarises it with OpenAI, and posts it to X — once a day, on a schedule.
+one, summarises it with Claude, and posts it to X — once a day, on a schedule.
 
 Replaces the 2024 scripts in the parent directory, whose data source
 (`www.et.gr/api/DownloadFeksApi`) now returns 301.
@@ -21,9 +21,9 @@ EventBridge Scheduler  (21:00 Europe/Athens, Mon-Fri)
         ↓
    download + parse the PDF           fek_doc.py              → law name, table of contents, sections
         ↓
-   STAGE 1  triage the contents       OpenAI                  → is this news? which articles?
+   STAGE 1  triage the contents       Claude (Sonnet 5)       → is this news? which articles?
         ↓
-   STAGE 2  extract facts             OpenAI                  → structured JSON provisions
+   STAGE 2  extract facts             Claude (Sonnet 5)       → structured JSON provisions
         ↓
    STAGE 3  compose                   compose.py              → 1 tweet or a thread, ≤280 chars
         ↓
@@ -76,6 +76,14 @@ the bot's focus does not require touching Python.
 - `extract.md` — the shape of the extracted facts.
 - `compose.md` — only used when `COMPOSE_MODE=llm`.
 
+These are meant to be rewritten by hand, so the placeholder syntax is deliberately
+forgiving: write `{{editorial_policy}}`, `{{top_k}}`, `{{tweet_count}}`, `{{budget}}`, or
+`{{law_name}}` wherever you need them (see `config.render()`), and everything else — braces,
+JSON examples, anything — passes through as plain text rather than raising. You also don't
+need to describe the output JSON shape yourself: `llm.py` passes a schema on every call
+(`output_config.format`), so the API enforces it — the prompt only needs to say what each
+field *means*.
+
 After editing, re-run `local_run.py` on a couple of past dates and check that the
 picks move the way you expected.
 
@@ -116,12 +124,17 @@ No API key needed for the parsing stages:
 .venv/bin/python scripts/local_run.py --date 2026-07-31 --fake-llm
 ```
 
-With `OPENAI_API_KEY` exported, for real output:
+With `ANTHROPIC_API_KEY` exported, for real output:
 
 ```bash
-export OPENAI_API_KEY=sk-...
+export ANTHROPIC_API_KEY=sk-ant-...
 .venv/bin/python scripts/local_run.py --date 2026-07-31 --explain
 ```
+
+> A Claude **Pro** subscription does not cover this — Pro is for claude.ai and Claude Code, not the
+> API. Create a key and add credits at [console.anthropic.com](https://console.anthropic.com). At
+> this pipeline's volume (~15k tokens/day, ~22 weekdays/month) `claude-sonnet-5` runs roughly
+> **$1.50/month**.
 
 `--stage {list,parse,triage,extract,compose}` stops early. `--label 'Β 5013/2026'`
 forces a specific issue. `--post` actually publishes (otherwise nothing is sent).
@@ -134,7 +147,7 @@ forces a specific issue. `--post` actually publishes (otherwise nothing is sent)
 template.
 
 ```bash
-aws ssm put-parameter --type SecureString --name /fek-daily-tweet/openai_api_key            --value '...'
+aws ssm put-parameter --type SecureString --name /fek-daily-tweet/anthropic_api_key         --value '...'
 aws ssm put-parameter --type SecureString --name /fek-daily-tweet/twitter/consumer_key      --value '...'
 aws ssm put-parameter --type SecureString --name /fek-daily-tweet/twitter/consumer_secret   --value '...'
 aws ssm put-parameter --type SecureString --name /fek-daily-tweet/twitter/access_token      --value '...'
@@ -170,7 +183,8 @@ sam deploy --parameter-overrides DryRun=false
 | Env var | Default | |
 |---|---|---|
 | `DRY_RUN` | `true` | Compose and log, never post. |
-| `OPENAI_MODEL` | `gpt-4o-mini` | |
+| `ANTHROPIC_MODEL` | `claude-sonnet-5` | |
+| `EFFORT` | `medium` | Thinking/output depth for both LLM stages (`low`..`max`). |
 | `MIN_NEWSWORTHINESS` | `4` | Below this, skip to the next candidate. |
 | `TRIAGE_TOP_K` | `4` | Articles read in full per document. |
 | `THREAD_MODE` | `auto` | `single`, `auto`, or `always`. |

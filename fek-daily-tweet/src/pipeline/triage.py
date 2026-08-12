@@ -11,10 +11,36 @@ import logging
 from dataclasses import dataclass, field
 
 import llm
-from config import editorial_policy, prompt, settings
+from config import editorial_policy, render, settings
 from fek_doc import FekDoc
 
 log = logging.getLogger(__name__)
+
+# Enforced by the API, not merely requested in the prompt. Numeric ranges are not
+# expressible here (the schema dialect has no minimum/maximum), so scores are
+# plain integers and are clamped below.
+SCHEMA = {
+    "type": "object",
+    "properties": {
+        "overall_newsworthiness": {"type": "integer"},
+        "headline_angle": {"type": "string"},
+        "selected": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "number": {"type": "integer"},
+                    "score": {"type": "integer"},
+                    "reason": {"type": "string"},
+                },
+                "required": ["number", "score", "reason"],
+                "additionalProperties": False,
+            },
+        },
+    },
+    "required": ["overall_newsworthiness", "headline_angle", "selected"],
+    "additionalProperties": False,
+}
 
 
 @dataclass
@@ -40,8 +66,8 @@ def triage(doc: FekDoc) -> TriageResult:
         )
         toc = toc[: settings.max_toc_chars]
 
-    system = prompt("triage").format(
-        editorial_policy=editorial_policy(), top_k=settings.triage_top_k
+    system = render(
+        "triage", editorial_policy=editorial_policy(), top_k=settings.triage_top_k
     )
     user = (
         f"Πράξη: {doc.law_name}\n"
@@ -50,7 +76,13 @@ def triage(doc: FekDoc) -> TriageResult:
         f"Πίνακας περιεχομένων:\n{toc}"
     )
 
-    data = llm.complete_json(system, user, label=f"triage {doc.label}")
+    data = llm.complete_json(
+        system,
+        user,
+        label=f"triage {doc.label}",
+        schema=SCHEMA,
+        max_tokens=settings.triage_max_tokens,
+    )
 
     selected = data.get("selected") or []
     valid = {section.number for section in doc.sections}

@@ -3,7 +3,7 @@
 
     python scripts/local_run.py --date 2026-07-31 --dry-run --explain
 
-Credentials come from the environment (OPENAI_API_KEY, TWITTER_*) when SSM is
+Credentials come from the environment (ANTHROPIC_API_KEY, TWITTER_*) when SSM is
 unavailable. --stage lets you stop early: `parse` needs no API key at all.
 """
 
@@ -36,7 +36,7 @@ def main() -> int:
     parser.add_argument(
         "--fake-llm",
         action="store_true",
-        help="stub out OpenAI to exercise the wiring without an API key",
+        help="stub out the LLM to exercise the wiring without an API key",
     )
     args = parser.parse_args()
 

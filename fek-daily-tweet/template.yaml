@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
   Reads the day's Εφημερίδα της Κυβερνήσεως publications, summarises the most
-  newsworthy one with OpenAI, and posts it to X. Runs once a day on weekdays.
+  newsworthy one with Claude, and posts it to X. Runs once a day on weekdays.
 
 Parameters:
   StackSuffix:
@@ -28,9 +28,14 @@ Parameters:
     Default: "true"
     AllowedValues: ["true", "false"]
     Description: Deploy true first; flip to false once the composed output looks right.
-  OpenAiModel:
+  AnthropicModel:
     Type: String
-    Default: gpt-4o-mini
+    Default: claude-sonnet-5
+  Effort:
+    Type: String
+    Default: medium
+    AllowedValues: [low, medium, high, xhigh, max]
+    Description: Thinking/output depth for both LLM stages.
   ThreadMode:
     Type: String
     Default: auto
@@ -69,7 +74,8 @@ Resources:
       Environment:
         Variables:
           DRY_RUN: !Ref DryRun
-          OPENAI_MODEL: !Ref OpenAiModel
+          ANTHROPIC_MODEL: !Ref AnthropicModel
+          EFFORT: !Ref Effort
           THREAD_MODE: !Ref ThreadMode
           MIN_NEWSWORTHINESS: !Ref MinNewsworthiness
           TABLE_NAME: !Ref PostedTable
