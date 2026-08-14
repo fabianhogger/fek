@@ -92,7 +92,14 @@ Resources:
                 - ssm:GetParametersByPath
                 - ssm:GetParameter
                 - ssm:GetParameters
-              Resource: !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/fek-daily-tweet${StackSuffix}/*"
+              # GetParametersByPath(Path="/fek-daily-tweet") checks permission on the
+              # exact path string, not just the wildcard beneath it — a Resource of
+              # only ".../fek-daily-tweet/*" denies the by-path call itself, even
+              # though the individual parameters underneath match. Both ARNs are
+              # required.
+              Resource:
+                - !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/fek-daily-tweet${StackSuffix}"
+                - !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/fek-daily-tweet${StackSuffix}/*"
             - Effect: Allow
               Action: kms:Decrypt
               Resource: !Sub "arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:alias/aws/ssm"
