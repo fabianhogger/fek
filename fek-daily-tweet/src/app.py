@@ -28,6 +28,10 @@ from pipeline.triage import triage
 logging.basicConfig(
     level=os.environ.get("LOG_LEVEL", "INFO"),
     format="%(levelname)s %(name)s %(message)s",
+    # Lambda's runtime attaches its own root handler before this module runs,
+    # which makes basicConfig() a silent no-op without force=True — LOG_LEVEL
+    # would otherwise never actually take effect.
+    force=True,
 )
 log = logging.getLogger("fek")
 
