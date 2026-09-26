@@ -82,10 +82,14 @@ def _render_provision(provision: Provision) -> str:
     parts = [provision.what_changes.rstrip(".")]
     if provision.who_is_affected:
         parts.append(f"Αφορά: {provision.who_is_affected.rstrip('.')}")
+    if provision.location:
+        parts.append(provision.location.rstrip("."))
     if provision.amount:
         parts.append(f"Ποσό: {provision.amount}")
     if provision.effective_date:
         parts.append(f"Ισχύς: {provision.effective_date}")
+    if provision.ministry:
+        parts.append(provision.ministry.rstrip("."))
     return ". ".join(parts) + "."
 
 

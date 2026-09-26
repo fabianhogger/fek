@@ -54,7 +54,10 @@ class Settings:
     # Composition
     thread_mode: str = os.environ.get("THREAD_MODE", "auto")  # single|auto|always
     thread_max_tweets: int = _int("THREAD_MAX_TWEETS", 4)
-    thread_min_importance: int = _int("THREAD_MIN_IMPORTANCE", 6)
+    # Raised from 6: a thread needs 2+ provisions clearing this bar, so a higher
+    # bar means fewer documents default to a multi-tweet series and more stay a
+    # single, punchier tweet.
+    thread_min_importance: int = _int("THREAD_MIN_IMPORTANCE", 7)
     compose_mode: str = os.environ.get("COMPOSE_MODE", "template")  # template|llm
 
     # Anthropic

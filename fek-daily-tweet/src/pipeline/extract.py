@@ -33,6 +33,8 @@ SCHEMA = {
                     "amount": {"type": ["string", "null"]},
                     "effective_date": {"type": ["string", "null"]},
                     "importance": {"type": "integer"},
+                    "location": {"type": ["string", "null"]},
+                    "ministry": {"type": ["string", "null"]},
                 },
                 "required": [
                     "what_changes",
@@ -40,6 +42,8 @@ SCHEMA = {
                     "amount",
                     "effective_date",
                     "importance",
+                    "location",
+                    "ministry",
                 ],
                 "additionalProperties": False,
             },
@@ -57,6 +61,8 @@ class Provision:
     amount: str | None = None
     effective_date: str | None = None
     importance: int = 0
+    location: str | None = None  # δήμος/πόλη, when the provision is geographically specific
+    ministry: str | None = None  # e.g. "ΥΠΕΝ" — the responsible ministry's initials
 
 
 @dataclass
@@ -121,6 +127,8 @@ def extract(doc: FekDoc, article_numbers: list[int]) -> Facts:
                 amount=_clean(raw.get("amount")),
                 effective_date=_clean(raw.get("effective_date")),
                 importance=importance,
+                location=_clean(raw.get("location")),
+                ministry=_clean(raw.get("ministry")),
             )
         )
     provisions.sort(key=lambda p: p.importance, reverse=True)

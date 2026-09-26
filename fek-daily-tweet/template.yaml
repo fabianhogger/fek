@@ -81,7 +81,8 @@ Resources:
           TABLE_NAME: !Ref PostedTable
           SSM_PREFIX: !Sub "/fek-daily-tweet${StackSuffix}"
           TZ_NAME: !Ref ScheduleTimezone
-          INCLUDE_LINK: "true"
+          # PDF links hurt reach on X's algorithm — omitted by default.
+          INCLUDE_LINK: "false"
           LOG_LEVEL: INFO
       Policies:
         - DynamoDBCrudPolicy:

@@ -189,11 +189,11 @@ sam deploy --parameter-overrides DryRun=false
 | `TRIAGE_TOP_K` | `4` | Articles read in full per document. |
 | `THREAD_MODE` | `auto` | `single`, `auto`, or `always`. |
 | `THREAD_MAX_TWEETS` | `4` | |
-| `THREAD_MIN_IMPORTANCE` | `6` | `auto` threads when ≥2 provisions clear this. |
+| `THREAD_MIN_IMPORTANCE` | `7` | `auto` threads when ≥2 provisions clear this. |
 | `MAX_CANDIDATES` | `8` | Documents tried per day before giving up. |
 | `MAX_EXTRACT_CHARS` | `40000` | Stage 2 input budget. |
 | `COMPOSE_MODE` | `template` | `llm` routes wording through `compose.md`. |
-| `INCLUDE_LINK` | `true` | Appends the PDF URL (costs 24 characters). |
+| `INCLUDE_LINK` | `false` | PDF links hurt reach on X's algorithm, so off by default. |
 
 Operational state is a DynamoDB table keyed on `fek_id`, with a 90-day TTL. It stores
 the extracted `facts_json`, so you can review what the pipeline decided when tuning
