@@ -42,7 +42,7 @@ Parameters:
     AllowedValues: [single, auto, always]
   MinNewsworthiness:
     Type: String
-    Default: "4"
+    Default: "3"
     Description: Documents scoring below this are skipped in favour of the next candidate.
   AlarmEmail:
     Type: String

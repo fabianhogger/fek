@@ -185,7 +185,7 @@ sam deploy --parameter-overrides DryRun=false
 | `DRY_RUN` | `true` | Compose and log, never post. |
 | `ANTHROPIC_MODEL` | `claude-sonnet-5` | |
 | `EFFORT` | `medium` | Thinking/output depth for both LLM stages (`low`..`max`). |
-| `MIN_NEWSWORTHINESS` | `4` | Below this, skip to the next candidate. |
+| `MIN_NEWSWORTHINESS` | `3` | Below this, skip to the next candidate. |
 | `TRIAGE_TOP_K` | `4` | Articles read in full per document. |
 | `THREAD_MODE` | `auto` | `single`, `auto`, or `always`. |
 | `THREAD_MAX_TWEETS` | `4` | |

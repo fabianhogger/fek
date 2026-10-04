@@ -104,11 +104,18 @@ def _process(
 
     verdict = triage(doc)
     if not verdict.passes:
+        # Full triage reasoning, not just the score — this is the only record of
+        # why a document was skipped, and it's what makes tuning the editorial
+        # policy against real near-misses possible instead of guessing.
+        reasons = "; ".join(f"άρθρο {n}: {r}" for n, r in verdict.reasons.items())
         log.info(
-            "%s scored %d (< %d), moving on",
+            "REJECTED %s: score %d (< %d) | angle: %s | selected: %s%s",
             publication.label,
             verdict.newsworthiness,
             settings.min_newsworthiness,
+            verdict.headline_angle or "—",
+            verdict.selected or "none",
+            f" | {reasons}" if reasons else "",
         )
         return None
 
