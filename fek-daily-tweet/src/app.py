@@ -117,6 +117,24 @@ def _process(
             verdict.selected or "none",
             f" | {reasons}" if reasons else "",
         )
+        # Best-effort preview of what would have been posted, so a rejection can
+        # be judged against the actual tweet rather than a bare score. Costs an
+        # extra extract + compose call — skipped entirely if triage chose no
+        # articles, since there would be nothing to build it from.
+        if verdict.selected:
+            try:
+                preview_facts = extract(doc, verdict.selected)
+                preview_tweets = compose(preview_facts, doc)
+                for index, text in enumerate(preview_tweets, 1):
+                    log.info(
+                        "  would-be tweet [%d/%d] (%d chars) %s",
+                        index,
+                        len(preview_tweets),
+                        len(text),
+                        text,
+                    )
+            except (ComposeRejected, llm.RefusedError) as exc:
+                log.info("  would-be tweet unavailable: %s", exc)
         return None
 
     facts = extract(doc, verdict.selected)
